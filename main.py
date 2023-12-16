@@ -30,7 +30,7 @@ if not os.path.exists(images_folder):
 def keyboard_main(message):
     chat_id = message.chat.id
     keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button_support = telebot.types.KeyboardButton(text="Написать в поддержку")
+    button_support = telebot.types.KeyboardButton(text="Кнопка 1")
     button1 = telebot.types.KeyboardButton(text="Выход")
     button2 = telebot.types.KeyboardButton(text="Переход на Вторую страницу")
     button3 = telebot.types.KeyboardButton(text="Фоторедактор")
@@ -42,10 +42,10 @@ def keyboard_main(message):
 def welcoddme(message):
     chat_id = message.chat.id
     keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button_support = telebot.types.KeyboardButton(text="Написать dsdв поддержку")
+    button_support = telebot.types.KeyboardButton(text="Кнопка 1")
     button1 = telebot.types.KeyboardButton(text="Выход")
     button2 = telebot.types.KeyboardButton(text="Вернуться на главную")
-    button3 = telebot.types.KeyboardButton(text="Кноsпка 3")
+    button3 = telebot.types.KeyboardButton(text="Кнопка 3")
     keyboard.add(button_support, button1, button2, button3)
     bot.send_message(chat_id,"Вы перешли на вторую страницу",reply_markup=keyboard)
 
@@ -86,17 +86,11 @@ def handle_text(message: Message):
 
 def process_image(message: Message):
     """Обработка изображений"""
-    #try:
-    # Получаем информацию о картинке
+
     file_info = bot.get_file(message.photo[-1].file_id)
 
-    # Скачиваем картинку по ссылке
     downloaded_file = bot.download_file(file_info.file_path)
 
-    # Сохраняем картинку во временный файл
-    # file_path = f"{images_folder}/{message.chat.id}.jpg"
-
-    # Альтернативное решение - сохраняем все загруженные картинки от пользователей, обновляем их при применении фильтра
     if not os.path.isdir(f"{images_folder}/{message.chat.id}"):
         os.mkdir(f"{images_folder}/{message.chat.id}")
     file_path = f"{images_folder}/{message.chat.id}/{str(randint(0, 1000001))}.jpg"
@@ -104,18 +98,12 @@ def process_image(message: Message):
     with open(file_path, "wb") as image_file:
         image_file.write(downloaded_file)
 
-    # Привязываем файл к пользователю
     user_images[message.chat.id] = file_path
 
-    # Отправляем сообщение о выборе фильтра
     keyboard = make_filter_options_keyboard(message)
     button2 = telebot.types.KeyboardButton(text="Вернуться на главную")
     keyboard.add(button2)
     bot.send_message(message.chat.id, "Выберите фильтр:", reply_markup=keyboard)
-
-    #except Exception:
-    #    bot.reply_to(message, "Что-то пошло не так. Пожалуйста, отправьте изображение.")
-
 
 def make_filter_options_keyboard(message: Message):
     """Собирает меню с кнопками-названиями фильтров"""
@@ -129,7 +117,6 @@ def apply_filter(message: Message):
     """Применение выбранного фильтра и отправка результата.
     Обработка текстовых сообщений"""
 
-    # Считываем картинку из временного файла
     file_path = user_images.get(message.chat.id)
     if not file_path:
         bot.reply_to(
@@ -147,7 +134,6 @@ def apply_filter(message: Message):
         )
         return
 
-    # Получаем название фильтра из сообщения пользователя
     selected_filter_name = message.text
     if selected_filter_name not in filters:
         bot.reply_to(
@@ -157,11 +143,9 @@ def apply_filter(message: Message):
         return
 
     try:
-        # Выбираем фильтр и применяем его
         selected_filter = filters[selected_filter_name]
         img = selected_filter.apply_to_image(img)
 
-        # Сохраняем результат без создания временного файла
         img.save(file_path, "JPEG")
 
         with open(file_path, "rb") as image_file:
@@ -170,9 +154,6 @@ def apply_filter(message: Message):
                 message.chat.id, "Ваше изображение с примененным фильтром."
             )
 
-        # Даём пользователю выбрать другой фильтр
-        # keyboard = make_filter_options_keyboard(message)
-        # bot.send_message(message.chat.id, "Выберите фильтр:", reply_markup=keyboard)
     except Exception as e:
         print(e)
         bot.reply_to(message, "Что-то пошло не так. Пожалуйста, попробуйте еще раз.")
